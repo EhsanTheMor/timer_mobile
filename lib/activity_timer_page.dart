@@ -3,27 +3,19 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-class SessionRecord {
-  SessionRecord({
-    required this.startTime,
-    required this.stopTime,
-    required this.durationSeconds,
-  });
-
-  final DateTime startTime;
-  final DateTime stopTime;
-  final int durationSeconds;
-}
+import 'models/session_record.dart';
 
 class ActivityTimerPage extends StatefulWidget {
   const ActivityTimerPage({
     super.key,
     required this.activityName,
     required this.records,
+    this.onSessionRecorded,
   });
 
   final String activityName;
   final List<SessionRecord> records;
+  final Future<void> Function(SessionRecord record)? onSessionRecorded;
 
   @override
   State<ActivityTimerPage> createState() => _ActivityTimerPageState();
@@ -52,30 +44,47 @@ class _ActivityTimerPageState extends State<ActivityTimerPage> {
     return parts.join(' ');
   }
 
-  void _onStartStop() {
+  Future<void> _onStartStop() async {
     if (_isRunning) {
       final stopTime = DateTime.now();
       _timer?.cancel();
       _timer = null;
-      final message = _formatElapsed(_elapsedSeconds);
+      final startTime = _sessionStartTime;
+      final durationSeconds = _elapsedSeconds;
+      final message = _formatElapsed(durationSeconds);
+
       setState(() {
-        if (_sessionStartTime != null) {
-          widget.records.insert(
-            0,
-            SessionRecord(
-              startTime: _sessionStartTime!,
-              stopTime: stopTime,
-              durationSeconds: _elapsedSeconds,
-            ),
-          );
-        }
         _isRunning = false;
         _elapsedSeconds = 0;
         _sessionStartTime = null;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Successful "$message"')),
-      );
+
+      if (startTime != null) {
+        final record = SessionRecord(
+          startTime: startTime,
+          stopTime: stopTime,
+          durationSeconds: durationSeconds,
+        );
+        widget.records.insert(0, record);
+        if (widget.onSessionRecorded != null) {
+          try {
+            await widget.onSessionRecorded!(record);
+          } catch (_) {
+            if (mounted) {
+              widget.records.removeAt(0);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Could not save session.')),
+              );
+              return;
+            }
+          }
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Successful "$message"')),
+          );
+        }
+      }
     } else {
       _sessionStartTime = DateTime.now();
       setState(() => _isRunning = true);
