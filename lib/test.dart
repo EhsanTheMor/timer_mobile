@@ -6,11 +6,14 @@ class Test extends StatelessWidget{
   
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "my test app", 
-      home: Scaffold(
-        body: Text("data"),
-      ),
-    );
+    print("Test");
+    return Scaffold(
+        body: Center(
+          child: Column(children: [
+            Text("data"),
+            FilledButton( onPressed: () => {}, child: Text("hi"))
+          ], mainAxisAlignment: MainAxisAlignment.center),
+        )
+      );
   }
 }

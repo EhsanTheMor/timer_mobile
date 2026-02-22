@@ -4,9 +4,10 @@ import 'package:timer_mobile/test.dart';
 import 'home.dart';
 
 void main() {
+  print("main");
   runApp(
     MaterialApp(
-      home: Test(),
+      home: Home(),
     ),
   );
 }

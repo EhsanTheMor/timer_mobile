@@ -26,8 +26,10 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> _loadActivities() async {
-      final activities = await _db.getActivitiesWithRecords();
     try {
+      print("step 1");
+      final activities = await _db.getActivitiesWithRecords();
+      print("step 2");
       if (!mounted) return;
       setState(() {
         _activities = activities;
